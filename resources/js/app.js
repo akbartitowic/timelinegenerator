@@ -28,9 +28,20 @@ window.timelineApp = function (holidaysJson) {
 
             this.initSortable();
 
-            // Re-init sortable after Livewire re-renders
+            // After every Livewire re-render, re-attach Flatpickr if it was destroyed by DOM morphing
             document.addEventListener('livewire:update', () => {
-                setTimeout(() => this.initSortable(), 100);
+                setTimeout(() => {
+                    this.initSortable();
+                    if (!this.$wire.showModal) return;
+                    const startEl = document.getElementById('fp-start-date');
+                    const endEl   = document.getElementById('fp-end-date');
+                    if ((startEl && !startEl._flatpickr) || (endEl && !endEl._flatpickr)) {
+                        this.initDatePickers(
+                            this.$wire.taskStartDate || '',
+                            this.$wire.taskEndDate   || ''
+                        );
+                    }
+                }, 100);
             });
         },
 
