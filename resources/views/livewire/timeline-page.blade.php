@@ -250,27 +250,42 @@
 
             {{-- ── Step: Ask ── --}}
             @if($modalStep === 'ask')
-            <div class="flex flex-col items-center justify-center px-8 py-10 text-center gap-6">
-                <div class="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center">
-                    <svg class="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            <div class="px-6 py-6 space-y-3">
+                <p class="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-4">Task ini memiliki revisi?</p>
+
+                {{-- Option: Tidak --}}
+                <button type="button" wire:click="setRevisionAnswer(false)"
+                    class="w-full flex items-center gap-4 p-4 rounded-xl border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 text-left transition-all">
+                    <div class="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-neutral-800">Tidak, langsung buat</p>
+                        <p class="text-xs text-neutral-400 mt-0.5">Task tanpa subtask revisi</p>
+                    </div>
+                    <svg class="w-4 h-4 text-neutral-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-neutral-900 mb-1.5">Task ini memiliki revisi?</h3>
-                    <p class="text-sm text-neutral-500 leading-relaxed">Jika ya, subtask <span class="font-medium text-amber-600">Revisi</span> dan <span class="font-medium text-emerald-600">Review</span><br>akan dibuat otomatis untuk setiap putaran.</p>
-                </div>
-                <div class="flex gap-3 w-full">
-                    <button type="button" wire:click="setRevisionAnswer(false)"
-                        class="flex-1 py-3 rounded-xl border-2 border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50 transition-all">
-                        Tidak
-                    </button>
-                    <button type="button" wire:click="setRevisionAnswer(true)"
-                        class="flex-1 py-3 rounded-xl border-2 border-blue-500 bg-blue-500 text-sm font-medium text-white hover:bg-blue-600 transition-all flex items-center justify-center gap-2">
-                        Ya, ada revisi
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </button>
-                </div>
+                </button>
+
+                {{-- Option: Ya --}}
+                <button type="button" wire:click="setRevisionAnswer(true)"
+                    class="w-full flex items-center gap-4 p-4 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 text-left transition-all">
+                    <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-blue-900">Ya, ada revisi</p>
+                        <p class="text-xs text-blue-500 mt-0.5">Subtask <span class="font-medium text-amber-600">Revisi</span> + <span class="font-medium text-emerald-600">Review</span> dibuat otomatis</p>
+                    </div>
+                    <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
             </div>
 
             {{-- ── Step: Count ── --}}
@@ -284,10 +299,11 @@
                         <div class="grid grid-cols-5 gap-2">
                             @for($i = 1; $i <= 10; $i++)
                             <button type="button" wire:click="selectRevisionCount({{ $i }})"
-                                class="py-3 rounded-xl text-sm font-bold transition-all
-                                    {{ $revisionCount === $i
-                                        ? 'bg-blue-500 text-white shadow-md shadow-blue-200 scale-105'
-                                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200' }}">
+                                @class([
+                                    'py-3 rounded-xl text-sm font-bold transition-colors',
+                                    'bg-blue-600 text-white ring-2 ring-blue-300 ring-offset-1' => $revisionCount === $i,
+                                    'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'      => $revisionCount !== $i,
+                                ])>
                                 {{ $i }}
                             </button>
                             @endfor
