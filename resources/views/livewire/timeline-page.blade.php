@@ -200,22 +200,45 @@
 
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] flex flex-col">
 
-            {{-- Modal header --}}
+            {{-- ── Modal header ── --}}
             <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-neutral-100">
                 <div class="flex items-center gap-3">
-                    <div class="w-3 h-3 rounded-full ring-2 ring-offset-1 flex-shrink-0"
-                        style="background-color:{{ $taskColor }}; ring-color:{{ $taskColor }}"></div>
-                    <div>
+                    @if($modalStep === 'count')
+                        <div class="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                        </div>
+                        <h2 class="text-base font-semibold text-neutral-900">Atur Revisi</h2>
+                    @elseif($modalStep === 'ask')
+                        <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                        </div>
                         <h2 class="text-base font-semibold text-neutral-900">
-                            @if($editingTaskId) Edit Task
-                            @elseif($parentTaskId) Add Subtask
-                            @else New Task
-                            @endif
+                            {{ $parentTaskId ? 'Add Subtask' : 'New Task' }}
                         </h2>
-                        @if($editingTaskId)
-                        <p class="text-xs text-neutral-400 mt-0.5">ID #{{ $editingTaskId }}</p>
-                        @endif
-                    </div>
+                    @else
+                        <div class="w-3 h-3 rounded-full ring-2 ring-offset-1 flex-shrink-0"
+                            style="background-color:{{ $taskColor }}; ring-color:{{ $taskColor }}"></div>
+                        <div>
+                            <h2 class="text-base font-semibold text-neutral-900">
+                                @if($editingTaskId) Edit Task
+                                @elseif($parentTaskId) Add Subtask
+                                @else New Task
+                                @endif
+                            </h2>
+                            @if($editingTaskId)
+                            <p class="text-xs text-neutral-400 mt-0.5">ID #{{ $editingTaskId }}</p>
+                            @elseif($withRevisions)
+                            <p class="text-xs text-amber-600 mt-0.5 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                {{ $revisionCount }} revisi · {{ $revisionCount * 2 }} subtask otomatis
+                            </p>
+                            @endif
+                        </div>
+                    @endif
                 </div>
                 <button wire:click="closeModal"
                     class="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors">
@@ -225,9 +248,110 @@
                 </button>
             </div>
 
-            {{-- Modal body (scrollable) --}}
+            {{-- ── Step: Ask ── --}}
+            @if($modalStep === 'ask')
+            <div class="flex flex-col items-center justify-center px-8 py-10 text-center gap-6">
+                <div class="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-neutral-900 mb-1.5">Task ini memiliki revisi?</h3>
+                    <p class="text-sm text-neutral-500 leading-relaxed">Jika ya, subtask <span class="font-medium text-amber-600">Revisi</span> dan <span class="font-medium text-emerald-600">Review</span><br>akan dibuat otomatis untuk setiap putaran.</p>
+                </div>
+                <div class="flex gap-3 w-full">
+                    <button type="button" wire:click="setRevisionAnswer(false)"
+                        class="flex-1 py-3 rounded-xl border-2 border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50 transition-all">
+                        Tidak
+                    </button>
+                    <button type="button" wire:click="setRevisionAnswer(true)"
+                        class="flex-1 py-3 rounded-xl border-2 border-blue-500 bg-blue-500 text-sm font-medium text-white hover:bg-blue-600 transition-all flex items-center justify-center gap-2">
+                        Ya, ada revisi
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            {{-- ── Step: Count ── --}}
+            @elseif($modalStep === 'count')
+            <div class="flex flex-col flex-1 min-h-0">
+                <div class="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+
+                    {{-- Number picker --}}
+                    <div>
+                        <p class="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-3">Berapa kali revisi?</p>
+                        <div class="grid grid-cols-5 gap-2">
+                            @for($i = 1; $i <= 10; $i++)
+                            <button type="button" wire:click="selectRevisionCount({{ $i }})"
+                                class="py-3 rounded-xl text-sm font-bold transition-all
+                                    {{ $revisionCount === $i
+                                        ? 'bg-blue-500 text-white shadow-md shadow-blue-200 scale-105'
+                                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200' }}">
+                                {{ $i }}
+                            </button>
+                            @endfor
+                        </div>
+                    </div>
+
+                    {{-- Preview --}}
+                    <div class="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+                        <p class="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Preview subtask yang akan dibuat</p>
+                        <div class="space-y-2 @if($revisionCount > 5) max-h-40 overflow-y-auto pr-1 @endif">
+                            @for($i = 1; $i <= $revisionCount; $i++)
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-neutral-400 w-4 shrink-0">{{ $i }}.</span>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100 text-amber-700 text-xs font-medium">
+                                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                    Revisi {{ $i }}
+                                </span>
+                                <svg class="w-3.5 h-3.5 text-neutral-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-medium">
+                                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    Review {{ $i }}
+                                </span>
+                            </div>
+                            @endfor
+                        </div>
+                        <p class="text-xs text-neutral-400 mt-3 pt-3 border-t border-neutral-200">
+                            Total <span class="font-semibold text-neutral-700">{{ $revisionCount * 2 }}</span> subtask akan dibuat otomatis
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="flex items-center justify-between px-6 py-4 border-t border-neutral-100 bg-neutral-50/50 rounded-b-2xl">
+                    <button type="button" wire:click="backToAsk()"
+                        class="flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-800 transition-colors">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        Kembali
+                    </button>
+                    <button type="button" wire:click="goToFormStep()"
+                        class="px-5 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2">
+                        Lanjut isi detail
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            {{-- ── Step: Form ── --}}
+            @else
             <form wire:submit="saveTask" class="flex flex-col flex-1 min-h-0">
                 <div class="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+
+                    {{-- Revision badge (if active) --}}
+                    @if($withRevisions && !$editingTaskId)
+                    <div class="flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5">
+                        <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <p class="text-xs text-amber-700">
+                            Setelah disimpan, <span class="font-semibold">{{ $revisionCount * 2 }} subtask</span> akan dibuat otomatis
+                            ({{ $revisionCount }}× Revisi + {{ $revisionCount }}× Review)
+                        </p>
+                        <button type="button" wire:click="backToAsk()" class="ml-auto text-xs text-amber-600 hover:text-amber-800 underline shrink-0">ubah</button>
+                    </div>
+                    @endif
 
                     {{-- Task Name --}}
                     <div>
@@ -451,6 +575,7 @@
                 </div>
 
             </form>
+            @endif
         </div>
     </div>
     @endif

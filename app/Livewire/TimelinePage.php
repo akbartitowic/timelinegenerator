@@ -34,6 +34,10 @@ class TimelinePage extends Component
     public string  $taskDependsOn     = '';
     public int     $taskOffsetDays    = 1;
 
+    public string $modalStep     = 'ask';   // 'ask' | 'count' | 'form'
+    public bool   $withRevisions = false;
+    public int    $revisionCount = 1;
+
     protected function rules(): array
     {
         return [
@@ -63,8 +67,9 @@ class TimelinePage extends Component
         $this->resetTaskForm();
         $this->parentTaskId  = null;
         $this->editingTaskId = null;
+        $this->modalStep     = 'ask';
         $this->showModal     = true;
-        $this->dispatch('modal-opened', startDate: '', endDate: '');
+        // No modal-opened dispatch here — date pickers don't exist until 'form' step
     }
 
     public function openAddSubtask(int $parentId): void
@@ -72,8 +77,36 @@ class TimelinePage extends Component
         $this->resetTaskForm();
         $this->parentTaskId  = $parentId;
         $this->editingTaskId = null;
+        $this->modalStep     = 'form';
         $this->showModal     = true;
         $this->dispatch('modal-opened', startDate: '', endDate: '');
+    }
+
+    public function setRevisionAnswer(bool $yes): void
+    {
+        $this->withRevisions = $yes;
+        if ($yes) {
+            $this->modalStep = 'count';
+        } else {
+            $this->modalStep = 'form';
+            $this->dispatch('modal-opened', startDate: '', endDate: '');
+        }
+    }
+
+    public function selectRevisionCount(int $count): void
+    {
+        $this->revisionCount = max(1, min(10, $count));
+    }
+
+    public function goToFormStep(): void
+    {
+        $this->modalStep = 'form';
+        $this->dispatch('modal-opened', startDate: '', endDate: '');
+    }
+
+    public function backToAsk(): void
+    {
+        $this->modalStep = 'ask';
     }
 
     public function openEditTask(int $taskId): void
@@ -94,7 +127,8 @@ class TimelinePage extends Component
         // Restore end-date mode: if duration matches, default to 'duration' mode
         $this->taskDurationInput = $task->duration_days ?: 1;
         $this->taskEndDateMode   = 'date';
-        $this->showModal        = true;
+        $this->modalStep         = 'form';
+        $this->showModal         = true;
         $this->dispatch('modal-opened', startDate: $this->taskStartDate, endDate: $this->taskEndDate);
     }
 
@@ -152,6 +186,28 @@ class TimelinePage extends Component
         } else {
             $data['sort_order'] = $maxOrder + 1;
             $task = Task::create($data);
+
+            // Auto-generate revision subtasks
+            if ($this->withRevisions && $this->revisionCount > 0) {
+                for ($i = 1; $i <= $this->revisionCount; $i++) {
+                    Task::create([
+                        'project_id' => $this->project->id,
+                        'parent_id'  => $task->id,
+                        'name'       => "Revisi $i",
+                        'status'     => 'not_started',
+                        'color'      => '#F59E0B',
+                        'sort_order' => ($i - 1) * 2 + 1,
+                    ]);
+                    Task::create([
+                        'project_id' => $this->project->id,
+                        'parent_id'  => $task->id,
+                        'name'       => "Review $i",
+                        'status'     => 'not_started',
+                        'color'      => '#10B981',
+                        'sort_order' => ($i - 1) * 2 + 2,
+                    ]);
+                }
+            }
         }
 
         // Cascade if end date changed
@@ -309,6 +365,9 @@ class TimelinePage extends Component
         $this->taskProgress      = 0;
         $this->taskDependsOn     = '';
         $this->taskOffsetDays    = 1;
+        $this->modalStep         = 'ask';
+        $this->withRevisions     = false;
+        $this->revisionCount     = 1;
         $this->resetErrorBag();
     }
 
